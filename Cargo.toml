@@ -1,0 +1,11 @@
+[package]
+name = "raytracer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+raylib = "5.5.1"
+
+[profile.dev]
+opt-level = 3
+debug = false
