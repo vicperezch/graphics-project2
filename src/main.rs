@@ -335,70 +335,74 @@ fn main() {
 
     let mut texture_manager = TextureManager::new();
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/obsidian.png");
+    texture_manager.load_texture(&mut window, &raylib_thread, "assets/shroomlight.png");
+    texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_nylium.png");
+    texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_stem.png");
+    texture_manager.load_texture(&mut window, &raylib_thread, "assets/blackstone.png");
 
     let mut framebuffer = Framebuffer::new(window_width as i32, window_height as i32);
 
     let obsidian = Material {
-        diffuse: Vector3::new(0.3, 0.1, 0.1),
-        albedo: [0.9, 0.1],
-        specular: 5.0,
-        reflectivity: 0.0,
+        diffuse: Vector3::new(0.1, 0.05, 0.15),
+        albedo: [0.8, 0.3],
+        specular: 90.0,
+        reflectivity: 0.2,
         transparency: 0.0,
         refractive_index: 0.0,
         texture: Some("assets/obsidian.png".to_string()),
         normal_map_id: None,
     };
 
-    let rubber = Material {
-        diffuse: Vector3::new(0.3, 0.1, 0.1),
+    let shroomlight = Material {
+        diffuse: Vector3::new(0.95, 0.6, 0.3),
         albedo: [0.9, 0.1],
+        specular: 15.0,
+        reflectivity: 0.0,
+        transparency: 0.0,
+        refractive_index: 0.0,
+        texture: Some("assets/shroomlight.png".to_string()),
+        normal_map_id: None,
+    };
+
+    let crimson_nylium = Material {
+        diffuse: Vector3::new(0.5, 0.1, 0.15),
+        albedo: [0.95, 0.05],
         specular: 5.0,
         reflectivity: 0.0,
         transparency: 0.0,
         refractive_index: 0.0,
-        texture: Some("assets/obsidian.png".to_string()),
+        texture: Some("assets/crimson_nylium.png".to_string()),
         normal_map_id: None,
     };
 
-    let ivory = Material {
-        diffuse: Vector3::new(0.4, 0.4, 0.3),
-        albedo: [0.6, 0.3],
-        specular: 50.0,
-        reflectivity: 0.3,
+    let crimson_stem = Material {
+        diffuse: Vector3::new(0.4, 0.15, 0.35),
+        albedo: [0.85, 0.15],
+        specular: 15.0,
+        reflectivity: 0.0,
         transparency: 0.0,
         refractive_index: 0.0,
-        texture: None,
+        texture: Some("assets/crimson_stem.png".to_string()),
         normal_map_id: None,
     };
 
-    let mirror = Material {
-        diffuse: Vector3::new(1.0, 1.0, 1.0),
-        albedo: [0.0, 10.0],
-        specular: 1500.0,
-        reflectivity: 0.9,
-        transparency: 0.1,
-        refractive_index: 1.5,
-        texture: None,
-        normal_map_id: None,
-    };
-
-    let glass = Material {
-        diffuse: Vector3::new(1.0, 1.0, 1.0),
-        albedo: [0.0, 5.0],
-        specular: 125.0,
-        reflectivity: 0.1,
-        transparency: 0.9,
-        refractive_index: 1.5,
-        texture: None,
+    let blackstone = Material {
+        diffuse: Vector3::new(0.15, 0.15, 0.18),
+        albedo: [0.9, 0.1],
+        specular: 20.0,
+        reflectivity: 0.05,
+        transparency: 0.0,
+        refractive_index: 0.0,
+        texture: Some("assets/blackstone.png".to_string()),
         normal_map_id: None,
     };
 
     let objects = vec![
-        Cube::new(Vector3::new(0.0, 0.0, 0.0), 2.0, rubber.clone()),
-        Cube::new(Vector3::new(1.0, 1.0, 1.0), 1.0, rubber.clone()),
-        Cube::new(Vector3::new(2.0, 0.0, -4.0), 2.0, ivory),
-        Cube::new(Vector3::new(2.0, -0.5, -1.0), 1.4, mirror),
-        Cube::new(Vector3::new(-1.5, 0.0, -1.0), 1.0, glass),
+        Cube::new(Vector3::new(-3.0, 0.0, 0.0), 1.5, obsidian),
+        Cube::new(Vector3::new(-1.0, 0.0, 0.0), 1.5, shroomlight),
+        Cube::new(Vector3::new(1.0, 0.0, 0.0), 1.5, crimson_nylium),
+        Cube::new(Vector3::new(3.0, 0.0, 0.0), 1.5, crimson_stem),
+        Cube::new(Vector3::new(0.0, 0.0, -2.0), 1.5, blackstone),
     ];
 
     let mut indices: Vec<usize> = (0..objects.len()).collect();
