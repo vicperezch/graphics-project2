@@ -3,6 +3,7 @@
 
 use raylib::prelude::*;
 use std::f32::consts::PI;
+use std::thread;
 
 mod bvh;
 mod camera;
@@ -14,13 +15,19 @@ mod ray_intersect;
 mod snell;
 mod textures;
 
-use bvh::BVHNode;
 use camera::Camera;
 use cube::Cube;
 use framebuffer::Framebuffer;
+use ray_intersect::{Intersect, RayIntersect};
+
+unsafe impl Send for Camera {}
+unsafe impl Sync for Camera {}
 use light::Light;
 use material::{Material, vector3_to_color};
-use ray_intersect::{Intersect, RayIntersect};
+
+unsafe impl Send for Light {}
+unsafe impl Sync for Light {}
+use bvh::BVHNode;
 use snell::{reflect, refract};
 use textures::TextureManager;
 
@@ -198,17 +205,27 @@ impl RenderConfig {
     }
 }
 
-pub fn render(
-    framebuffer: &mut Framebuffer,
+struct RowRange {
+    start: i32,
+    end: i32,
+    pixels: Vec<Color>,
+}
+
+pub fn render_row_range(
+    start_y: i32,
+    end_y: i32,
+    width: i32,
     bvh: &BVHNode,
     objects: &[Cube],
     camera: &Camera,
     light: &Light,
     texture_manager: &TextureManager,
     config: &RenderConfig,
-) {
-    for y in 0..framebuffer.height {
-        for x in 0..framebuffer.width {
+) -> Vec<Color> {
+    let mut pixels = Vec::with_capacity(((end_y - start_y) * width) as usize);
+
+    for y in start_y..end_y {
+        for x in 0..width {
             let screen_x = (2.0 * x as f32 * config.inv_width - 1.0)
                 * config.aspect_ratio
                 * config.perspective_scale;
@@ -228,8 +245,80 @@ pub fn render(
             );
             let pixel_color = vector3_to_color(pixel_color_vec);
 
-            framebuffer.set_current_color(pixel_color);
-            framebuffer.set_pixel(x, y);
+            pixels.push(pixel_color);
+        }
+    }
+
+    pixels
+}
+
+pub fn render(
+    framebuffer: &mut Framebuffer,
+    bvh: &BVHNode,
+    objects: &[Cube],
+    camera: &Camera,
+    light: &Light,
+    texture_manager: &TextureManager,
+    config: &RenderConfig,
+) {
+    let num_threads = thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4);
+
+    let height = framebuffer.height;
+    let width = framebuffer.width;
+    let rows_per_thread = (height as f32 / num_threads as f32).ceil() as i32;
+
+    let results = thread::scope(|s| {
+        let mut handles = vec![];
+
+        for thread_id in 0..num_threads {
+            let start_y = thread_id as i32 * rows_per_thread;
+            let end_y = ((thread_id as i32 + 1) * rows_per_thread).min(height);
+
+            if start_y >= height {
+                break;
+            }
+
+            let handle = s.spawn(move || {
+                let pixels = render_row_range(
+                    start_y,
+                    end_y,
+                    width,
+                    bvh,
+                    objects,
+                    camera,
+                    light,
+                    texture_manager,
+                    config,
+                );
+
+                RowRange {
+                    start: start_y,
+                    end: end_y,
+                    pixels,
+                }
+            });
+
+            handles.push(handle);
+        }
+
+        handles
+            .into_iter()
+            .map(|h| h.join().unwrap())
+            .collect::<Vec<_>>()
+    });
+
+    for row_range in results {
+        let mut pixel_idx = 0;
+
+        for y in row_range.start..row_range.end {
+            for x in 0..width {
+                let color = row_range.pixels[pixel_idx];
+                framebuffer.set_current_color(color);
+                framebuffer.set_pixel(x, y);
+                pixel_idx += 1;
+            }
         }
     }
 }
@@ -240,7 +329,7 @@ fn main() {
 
     let (mut window, raylib_thread) = raylib::init()
         .size(window_width, window_height)
-        .title("Raytracer - Optimized Minecraft Diorama")
+        .title("Raytracer - Multithreaded Minecraft Diorama")
         .log_level(TraceLogLevel::LOG_WARNING)
         .build();
 
@@ -305,8 +394,8 @@ fn main() {
     };
 
     let objects = vec![
-        Cube::new(Vector3::new(0.0, 0.0, 0.0), 2.0, obsidian.clone()),
-        Cube::new(Vector3::new(1.0, 1.0, 1.0), 1.0, obsidian.clone()),
+        Cube::new(Vector3::new(0.0, 0.0, 0.0), 2.0, rubber.clone()),
+        Cube::new(Vector3::new(1.0, 1.0, 1.0), 1.0, rubber.clone()),
         Cube::new(Vector3::new(2.0, 0.0, -4.0), 2.0, ivory),
         Cube::new(Vector3::new(2.0, -0.5, -1.0), 1.4, mirror),
         Cube::new(Vector3::new(-1.5, 0.0, -1.0), 1.0, glass),
