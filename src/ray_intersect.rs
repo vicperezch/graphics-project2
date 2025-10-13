@@ -1,6 +1,6 @@
 // ray_intersect.rs
-use raylib::prelude::{Color, Vector3};
 use crate::material::Material;
+use raylib::prelude::{Color, Vector3};
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -16,7 +16,14 @@ pub struct Intersect {
 }
 
 impl Intersect {
-    pub fn new(material: Material, distance: f32, normal: Vector3, point: Vector3, u: f32, v: f32) -> Self {
+    pub fn new(
+        material: Material,
+        distance: f32,
+        normal: Vector3,
+        point: Vector3,
+        u: f32,
+        v: f32,
+    ) -> Self {
         Intersect {
             material,
             distance,
@@ -39,6 +46,8 @@ impl Intersect {
                 refractive_index: 0.0,
                 texture: None,
                 normal_map_id: None,
+                emission: Vector3::zero(),
+                emission_strength: 0.0,
             },
             distance: 0.0,
             is_intersecting: false,

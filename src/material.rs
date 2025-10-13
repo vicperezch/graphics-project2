@@ -3,18 +3,31 @@ use raylib::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct Material {
-    pub diffuse: Vector3, // Color
-    pub albedo: [f32; 2], // que tan colorido es: [color del objeto, color que viene de la luz]
-    pub specular: f32, // brillo
-    pub reflectivity: f32, // reflectividad, 1.0 espejo, 0.0 no refleja nada
-    pub transparency: f32, // transparencia, 1.0 perfectamente transparente, 0.0 no transparente
-    pub refractive_index: f32, // indice de refraccion
-    pub texture: Option<String>, // path to texture
-    pub normal_map_id: Option<String>, // path to normal map
+    pub diffuse: Vector3,
+    pub albedo: [f32; 2],
+    pub specular: f32,
+    pub reflectivity: f32,
+    pub transparency: f32,
+    pub refractive_index: f32,
+    pub texture: Option<String>,
+    pub normal_map_id: Option<String>,
+    pub emission: Vector3,
+    pub emission_strength: f32,
 }
 
 impl Material {
-    pub fn new(diffuse: Vector3, albedo: [f32; 2], specular: f32, reflectivity: f32, transparency: f32, refractive_index: f32, texture: Option<String>, normal_map_id: Option<String>) -> Self {
+    pub fn new(
+        diffuse: Vector3,
+        albedo: [f32; 2],
+        specular: f32,
+        reflectivity: f32,
+        transparency: f32,
+        refractive_index: f32,
+        texture: Option<String>,
+        normal_map_id: Option<String>,
+        emission: Vector3,
+        emission_strength: f32,
+    ) -> Self {
         Material {
             diffuse,
             albedo,
@@ -24,9 +37,11 @@ impl Material {
             refractive_index,
             texture,
             normal_map_id,
+            emission,
+            emission_strength,
         }
     }
-    
+
     pub fn black() -> Self {
         Material {
             diffuse: Vector3::zero(),
@@ -37,6 +52,8 @@ impl Material {
             refractive_index: 0.0,
             texture: None,
             normal_map_id: None,
+            emission: Vector3::zero(),
+            emission_strength: 0.0,
         }
     }
 }

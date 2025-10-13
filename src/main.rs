@@ -84,7 +84,7 @@ pub fn cast_ray(
     ray_direction: &Vector3,
     bvh: &BVHNode,
     objects: &[Cube],
-    light: &Light,
+    lights: &[Light],
     depth: u32,
     texture_manager: &TextureManager,
 ) -> Vector3 {
@@ -104,22 +104,35 @@ pub fn cast_ray(
         return procedural_sky(*ray_direction);
     }
 
-    let light_direction = (light.position - intersect.point).normalized();
     let view_direction = (*ray_origin - intersect.point).normalized();
-
     let normal = intersect.normal;
 
-    let reflection_direction = reflect(&-light_direction, &normal).normalized();
+    let mut total_diffuse = Vector3::zero();
+    let mut total_specular = Vector3::zero();
 
-    let diffuse_intensity = normal.dot(light_direction).max(0.0);
-    let shadow_intensity = if diffuse_intensity > 0.01 {
-        cast_shadow(&intersect, light, bvh, objects)
-    } else {
-        0.0
-    };
+    for light in lights {
+        let light_direction = (light.position - intersect.point).normalized();
+        let reflection_direction = reflect(&-light_direction, &normal).normalized();
 
-    let light_intensity = light.intensity * (1.0 - shadow_intensity);
-    let final_diffuse_intensity = diffuse_intensity * light_intensity;
+        let diffuse_intensity = normal.dot(light_direction).max(0.0);
+        let shadow_intensity = if diffuse_intensity > 0.01 {
+            cast_shadow(&intersect, light, bvh, objects)
+        } else {
+            0.0
+        };
+
+        let light_intensity = light.intensity * (1.0 - shadow_intensity);
+        let final_diffuse_intensity = diffuse_intensity * light_intensity;
+
+        total_diffuse = total_diffuse + light.color * final_diffuse_intensity;
+
+        let specular_intensity = view_direction
+            .dot(reflection_direction)
+            .max(0.0)
+            .powf(intersect.material.specular)
+            * light_intensity;
+        total_specular = total_specular + light.color * specular_intensity;
+    }
 
     let diffuse_color = if let Some(texture_path) = &intersect.material.texture {
         if let Some(texture) = texture_manager.get_texture(texture_path) {
@@ -135,14 +148,8 @@ pub fn cast_ray(
         intersect.material.diffuse
     };
 
-    let diffuse = diffuse_color * final_diffuse_intensity;
-
-    let specular_intensity = view_direction
-        .dot(reflection_direction)
-        .max(0.0)
-        .powf(intersect.material.specular)
-        * light_intensity;
-    let specular = light.color * specular_intensity;
+    let diffuse = diffuse_color * total_diffuse;
+    let specular = total_specular;
 
     let mut reflection_color = Vector3::zero();
     let reflectivity = intersect.material.reflectivity;
@@ -155,7 +162,7 @@ pub fn cast_ray(
             &reflect_direction,
             bvh,
             objects,
-            light,
+            lights,
             depth + 1,
             texture_manager,
         );
@@ -173,16 +180,23 @@ pub fn cast_ray(
             &refract_direction,
             bvh,
             objects,
-            light,
+            lights,
             depth + 1,
             texture_manager,
         );
     }
 
+    let emissive = if intersect.material.emission_strength > 0.0 {
+        diffuse_color * intersect.material.emission * intersect.material.emission_strength
+    } else {
+        Vector3::zero()
+    };
+
     diffuse * intersect.material.albedo[0]
         + specular * intersect.material.albedo[1]
         + reflection_color * reflectivity
         + refraction_color * transparency
+        + emissive
 }
 
 pub struct RenderConfig {
@@ -218,7 +232,7 @@ pub fn render_row_range(
     bvh: &BVHNode,
     objects: &[Cube],
     camera: &Camera,
-    light: &Light,
+    lights: &[Light],
     texture_manager: &TextureManager,
     config: &RenderConfig,
 ) -> Vec<Color> {
@@ -239,7 +253,7 @@ pub fn render_row_range(
                 &rotated_direction,
                 bvh,
                 objects,
-                light,
+                lights,
                 0,
                 texture_manager,
             );
@@ -257,7 +271,7 @@ pub fn render(
     bvh: &BVHNode,
     objects: &[Cube],
     camera: &Camera,
-    light: &Light,
+    lights: &[Light],
     texture_manager: &TextureManager,
     config: &RenderConfig,
 ) {
@@ -288,7 +302,7 @@ pub fn render(
                     bvh,
                     objects,
                     camera,
-                    light,
+                    lights,
                     texture_manager,
                     config,
                 );
@@ -329,7 +343,7 @@ fn main() {
 
     let (mut window, raylib_thread) = raylib::init()
         .size(window_width, window_height)
-        .title("Raytracer - Multithreaded Minecraft Diorama")
+        .title("Raytracer - Nether Crimson Forest")
         .log_level(TraceLogLevel::LOG_WARNING)
         .build();
 
@@ -341,6 +355,7 @@ fn main() {
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/blackstone.png");
 
     let mut framebuffer = Framebuffer::new(window_width as i32, window_height as i32);
+    framebuffer.set_background_color(Color::new(51, 13, 13, 255));
 
     let obsidian = Material {
         diffuse: Vector3::new(0.1, 0.05, 0.15),
@@ -351,6 +366,8 @@ fn main() {
         refractive_index: 0.0,
         texture: Some("assets/obsidian.png".to_string()),
         normal_map_id: None,
+        emission: Vector3::zero(),
+        emission_strength: 0.0,
     };
 
     let shroomlight = Material {
@@ -362,6 +379,8 @@ fn main() {
         refractive_index: 0.0,
         texture: Some("assets/shroomlight.png".to_string()),
         normal_map_id: None,
+        emission: Vector3::new(1.0, 0.45, 0.15),
+        emission_strength: 1.2,
     };
 
     let crimson_nylium = Material {
@@ -373,6 +392,8 @@ fn main() {
         refractive_index: 0.0,
         texture: Some("assets/crimson_nylium.png".to_string()),
         normal_map_id: None,
+        emission: Vector3::zero(),
+        emission_strength: 0.0,
     };
 
     let crimson_stem = Material {
@@ -384,6 +405,8 @@ fn main() {
         refractive_index: 0.0,
         texture: Some("assets/crimson_stem.png".to_string()),
         normal_map_id: None,
+        emission: Vector3::zero(),
+        emission_strength: 0.0,
     };
 
     let blackstone = Material {
@@ -395,21 +418,23 @@ fn main() {
         refractive_index: 0.0,
         texture: Some("assets/blackstone.png".to_string()),
         normal_map_id: None,
+        emission: Vector3::zero(),
+        emission_strength: 0.0,
     };
 
     let objects = vec![
-        Cube::new(Vector3::new(-3.0, 0.0, 0.0), 1.5, obsidian),
-        Cube::new(Vector3::new(-1.0, 0.0, 0.0), 1.5, shroomlight),
-        Cube::new(Vector3::new(1.0, 0.0, 0.0), 1.5, crimson_nylium),
-        Cube::new(Vector3::new(3.0, 0.0, 0.0), 1.5, crimson_stem),
-        Cube::new(Vector3::new(0.0, 0.0, -2.0), 1.5, blackstone),
+        Cube::new(Vector3::new(-2.5, 0.0, 0.0), 1.5, obsidian),
+        Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
+        Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
+        Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
+        Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, blackstone),
     ];
 
     let mut indices: Vec<usize> = (0..objects.len()).collect();
     let bvh = BVHNode::build(&objects, &mut indices);
 
     let mut camera = Camera::new(
-        Vector3::new(0.0, 0.0, 5.0),
+        Vector3::new(0.0, 2.0, 8.0),
         Vector3::new(0.0, 0.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
     );
@@ -417,11 +442,25 @@ fn main() {
     let rotation_speed = PI / 100.0;
     let zoom_speed = 0.1;
 
-    let light = Light::new(
-        Vector3::new(5.0, 5.0, 5.0),
-        Vector3::new(1.0, 1.0, 1.0),
-        1.5,
+    let light1 = Light::new(
+        Vector3::new(5.0, 8.0, 5.0),
+        Vector3::new(1.0, 0.7, 0.5),
+        1.3,
     );
+
+    let mut lights = vec![light1];
+
+    for (idx, obj) in objects.iter().enumerate() {
+        if obj.material.emission_strength > 0.0 {
+            let center = (obj.min_bounds + obj.max_bounds) * 0.5;
+            let emissive_light = Light::new(
+                center,
+                obj.material.emission,
+                obj.material.emission_strength * 2.0,
+            );
+            lights.push(emissive_light);
+        }
+    }
 
     let render_config = RenderConfig::new(window_width as i32, window_height as i32, PI / 3.0);
 
@@ -452,7 +491,7 @@ fn main() {
             &bvh,
             &objects,
             &camera,
-            &light,
+            &lights,
             &texture_manager,
             &render_config,
         );
