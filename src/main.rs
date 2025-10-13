@@ -15,40 +15,58 @@ mod ray_intersect;
 mod snell;
 mod textures;
 
+use bvh::BVHNode;
 use camera::Camera;
 use cube::Cube;
 use framebuffer::Framebuffer;
-use ray_intersect::{Intersect, RayIntersect};
-
-unsafe impl Send for Camera {}
-unsafe impl Sync for Camera {}
 use light::Light;
 use material::{Material, vector3_to_color};
-
-unsafe impl Send for Light {}
-unsafe impl Sync for Light {}
-use bvh::BVHNode;
+use ray_intersect::{Intersect, RayIntersect};
 use snell::{reflect, refract};
 use textures::TextureManager;
 
-fn procedural_sky(dir: Vector3) -> Vector3 {
+fn procedural_sky(
+    dir: Vector3,
+    texture_manager: &TextureManager,
+    skybox_texture: Option<&str>,
+) -> Vector3 {
+    if let Some(skybox_path) = skybox_texture {
+        if let Some(texture) = texture_manager.get_texture(skybox_path) {
+            let d = dir.normalized();
+
+            let theta = (-d.x).atan2(-d.z);
+            let phi = d.y.asin();
+
+            let u = 0.5 + theta / (2.0 * PI);
+            let v = 0.5 - phi / PI;
+
+            let u_clamped = u.clamp(0.0, 0.9999);
+            let v_clamped = v.clamp(0.0, 0.9999);
+
+            let width = texture.width() as f32;
+            let height = texture.height() as f32;
+            let tx = (u_clamped * width) as u32;
+            let ty = (v_clamped * height) as u32;
+
+            return texture_manager.get_pixel_color(skybox_path, tx, ty);
+        }
+    }
+
     let d = dir.normalized();
     let t = (d.y + 1.0) * 0.5;
 
-    let green = Vector3::new(0.1, 0.6, 0.2);
-    let white = Vector3::new(1.0, 1.0, 1.0);
-    let blue = Vector3::new(0.3, 0.5, 1.0);
+    let dark_red = Vector3::new(0.2, 0.05, 0.05);
+    let crimson = Vector3::new(0.4, 0.08, 0.1);
+    let dark_orange = Vector3::new(0.3, 0.1, 0.05);
 
-    if t < 0.54 {
-        let k = t / 0.55;
-        green * (1.0 - k) + white * k
-    } else if t < 0.55 {
-        white
-    } else if t < 0.8 {
-        let k = (t - 0.55) / 0.25;
-        white * (1.0 - k) + blue * k
+    if t < 0.3 {
+        dark_red
+    } else if t < 0.6 {
+        let k = (t - 0.3) / 0.3;
+        dark_red * (1.0 - k) + crimson * k
     } else {
-        blue
+        let k = (t - 0.6) / 0.4;
+        crimson * (1.0 - k) + dark_orange * k
     }
 }
 
@@ -87,9 +105,10 @@ pub fn cast_ray(
     lights: &[Light],
     depth: u32,
     texture_manager: &TextureManager,
+    skybox_texture: Option<&str>,
 ) -> Vector3 {
     if depth > 3 {
-        return procedural_sky(*ray_direction);
+        return procedural_sky(*ray_direction, texture_manager, skybox_texture);
     }
 
     let inv_dir = Vector3::new(
@@ -101,7 +120,7 @@ pub fn cast_ray(
     let intersect = bvh.intersect(objects, ray_origin, ray_direction, &inv_dir);
 
     if !intersect.is_intersecting {
-        return procedural_sky(*ray_direction);
+        return procedural_sky(*ray_direction, texture_manager, skybox_texture);
     }
 
     let view_direction = (*ray_origin - intersect.point).normalized();
@@ -165,6 +184,7 @@ pub fn cast_ray(
             lights,
             depth + 1,
             texture_manager,
+            skybox_texture,
         );
     }
 
@@ -183,6 +203,7 @@ pub fn cast_ray(
             lights,
             depth + 1,
             texture_manager,
+            skybox_texture,
         );
     }
 
@@ -235,6 +256,7 @@ pub fn render_row_range(
     lights: &[Light],
     texture_manager: &TextureManager,
     config: &RenderConfig,
+    skybox_texture: Option<String>,
 ) -> Vec<Color> {
     let mut pixels = Vec::with_capacity(((end_y - start_y) * width) as usize);
 
@@ -248,6 +270,7 @@ pub fn render_row_range(
             let ray_direction = Vector3::new(screen_x, screen_y, -1.0).normalized();
             let rotated_direction = camera.basis_change(&ray_direction);
 
+            let skybox_ref = skybox_texture.as_deref();
             let pixel_color_vec = cast_ray(
                 &camera.eye,
                 &rotated_direction,
@@ -256,6 +279,7 @@ pub fn render_row_range(
                 lights,
                 0,
                 texture_manager,
+                skybox_ref,
             );
             let pixel_color = vector3_to_color(pixel_color_vec);
 
@@ -274,6 +298,7 @@ pub fn render(
     lights: &[Light],
     texture_manager: &TextureManager,
     config: &RenderConfig,
+    skybox_texture: Option<String>,
 ) {
     let num_threads = thread::available_parallelism()
         .map(|n| n.get())
@@ -294,6 +319,8 @@ pub fn render(
                 break;
             }
 
+            let skybox_clone = skybox_texture.clone();
+
             let handle = s.spawn(move || {
                 let pixels = render_row_range(
                     start_y,
@@ -305,6 +332,7 @@ pub fn render(
                     lights,
                     texture_manager,
                     config,
+                    skybox_clone,
                 );
 
                 RowRange {
@@ -353,6 +381,15 @@ fn main() {
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_nylium.png");
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_stem.png");
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/blackstone.png");
+
+    let skybox_texture = if std::path::Path::new("assets/nether_skybox.png").exists() {
+        texture_manager.load_texture(&mut window, &raylib_thread, "assets/nether_skybox.png");
+        println!("✓ Skybox texture loaded: assets/nether_skybox.png");
+        Some("assets/nether_skybox.png".to_string())
+    } else {
+        println!("✗ Skybox texture not found, using procedural sky");
+        None
+    };
 
     let mut framebuffer = Framebuffer::new(window_width as i32, window_height as i32);
     framebuffer.set_background_color(Color::new(51, 13, 13, 255));
@@ -450,7 +487,7 @@ fn main() {
 
     let mut lights = vec![light1];
 
-    for (idx, obj) in objects.iter().enumerate() {
+    for obj in objects.iter() {
         if obj.material.emission_strength > 0.0 {
             let center = (obj.min_bounds + obj.max_bounds) * 0.5;
             let emissive_light = Light::new(
@@ -494,6 +531,7 @@ fn main() {
             &lights,
             &texture_manager,
             &render_config,
+            skybox_texture.clone(),
         );
 
         framebuffer.swap_buffers(&mut window, &raylib_thread);
