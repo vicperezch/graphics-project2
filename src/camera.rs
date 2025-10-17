@@ -1,13 +1,12 @@
-// camera.rs
 use raylib::prelude::*;
 
 pub struct Camera {
-    pub eye: Vector3,     // donde esta la camara en el mundo, ejemplo (7,100,10)
-    pub center: Vector3,  // que mira la camara (mario), ejemplo (7,100,5)
-    pub up: Vector3,      // donde esta arriba
+    pub eye: Vector3,    // donde esta la camara en el mundo, ejemplo (7,100,10)
+    pub center: Vector3, // que mira la camara (mario), ejemplo (7,100,5)
+    pub up: Vector3,     // donde esta arriba
     pub forward: Vector3,
     pub right: Vector3,
-    changed: bool,        // para optimizar actualizaciones
+    changed: bool, // para optimizar actualizaciones
 }
 
 impl Camera {
@@ -41,16 +40,13 @@ impl Camera {
         let current_yaw = relative_pos.z.atan2(relative_pos.x);
         let current_pitch = (relative_pos.y / radius).asin();
 
-        // coordenadas esféricas
+        // Limitar pitch para evitar gimbal lock (no permitir mirar completamente arriba/abajo)
         let new_yaw = current_yaw + yaw;
-        let new_pitch = (current_pitch + pitch).clamp(-1.5, 1.5);
+        let new_pitch = (current_pitch + pitch).clamp(-1.4, 1.4); // ~80 grados máximo
 
         let pitch_cos = new_pitch.cos();
         let pitch_sin = new_pitch.sin();
 
-        // x = r * cos(a) * cos(b)
-        // y = r * sin(a)
-        // z = r * cos(a) * sin (b)
         let new_relative_pos = Vector3::new(
             radius * pitch_cos * new_yaw.cos(),
             radius * pitch_sin,

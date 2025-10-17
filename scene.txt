@@ -1,5 +1,172 @@
-0 0 -1 1 crimson_nylium
-1 0 -1 1 crimson_nylium
-2 0 -1 1 crimson_nylium
-3 0 -1 1 crimson_nylium
-4 0 -1 1 crimson_nylium
+# Base
+-1.0 -2.5 -2.0 0.5 crimson_nylium
+-0.5 -2.0 -2.0 0.5 crimson_nylium
+0.0 -2.0 -2.0 0.5 crimson_nylium
+0.5 -2.0 -2.0 0.5 crimson_nylium
+1.0 -2.0 -2.0 0.5 crimson_nylium
+1.5 -2.0 -2.0 0.5 crimson_nylium
+2.0 -2.0 -2.0 0.5 crimson_nylium
+2.5 -2.5 -2.0 0.5 crimson_nylium
+
+-1.0 -2.5 -1.5 0.5 crimson_nylium
+-0.5 -2.0 -1.5 0.5 crimson_nylium
+0.0 -2.0 -1.5 0.5 crimson_nylium
+0.5 -2.0 -1.5 0.5 crimson_nylium
+1.0 -2.0 -1.5 0.5 crimson_nylium
+1.5 -2.0 -1.5 0.5 crimson_nylium
+2.0 -2.0 -1.5 0.5 crimson_nylium
+2.5 -2.5 -1.5 0.5 crimson_nylium
+3.0 -2.5 -1.5 0.5 crimson_nylium
+
+-1.0 -2.5 -1.0 0.5 crimson_nylium
+-0.5 -2.0 -1.0 0.5 crimson_nylium
+0.0 -2.0 -1.0 0.5 crimson_nylium
+0.5 -2.0 -1.0 0.5 crimson_nylium
+1.0 -2.0 -1.0 0.5 crimson_nylium
+1.5 -2.0 -1.0 0.5 crimson_nylium
+2.0 -2.0 -1.0 0.5 crimson_nylium
+2.5 -2.5 -1.0 0.5 crimson_nylium
+3.0 -2.5 -1.0 0.5 crimson_nylium
+3.5 -2.5 -1.0 0.5 crimson_nylium
+
+-1.0 -2.5 -0.5 0.5 crimson_nylium
+-0.5 -2.0 -0.5 0.5 crimson_nylium
+0.0 -2.0 -0.5 0.5 crimson_nylium
+0.5 -2.0 -0.5 0.5 crimson_nylium
+1.0 -2.0 -0.5 0.5 crimson_nylium
+1.5 -2.0 -0.5 0.5 crimson_nylium
+2.0 -2.0 -0.5 0.5 crimson_nylium
+2.5 -2.5 -0.5 0.5 crimson_nylium
+3.0 -2.5 -0.5 0.5 crimson_nylium
+3.5 -2.5 -0.5 0.5 crimson_nylium
+
+-0.5 -2.5 0.0 0.5 crimson_nylium
+0.0 -2.0 0.0 0.5 crimson_nylium
+0.5 -2.0 0.0 0.5 crimson_nylium
+1.0 -2.0 0.0 0.5 crimson_nylium
+1.5 -2.5 0.0 0.5 crimson_nylium
+2.0 -2.5 0.0 0.5 crimson_nylium
+2.5 -2.5 0.0 0.5 crimson_nylium
+3.0 -2.5 0.0 0.5 crimson_nylium
+3.5 -2.5 0.0 0.5 crimson_nylium
+
+-0.5 -2.5 0.5 0.5 crimson_nylium
+0.0 -2.5 0.5 0.5 crimson_nylium
+0.5 -2.5 0.5 0.5 crimson_nylium
+1.0 -2.5 0.5 0.5 crimson_nylium
+1.5 -2.5 0.5 0.5 crimson_nylium
+2.0 -2.5 0.5 0.5 crimson_nylium
+2.5 -2.5 0.5 0.5 crimson_nylium
+3.0 -2.5 0.5 0.5 crimson_nylium
+3.5 -2.5 0.5 0.5 crimson_nylium
+
+-0.5 -2.5 1.0 0.5 crimson_nylium
+0.0 -2.5 1.0 0.5 crimson_nylium
+0.5 -2.5 1.0 0.5 crimson_nylium
+1.0 -2.5 1.0 0.5 crimson_nylium
+1.5 -2.5 1.0 0.5 crimson_nylium
+2.0 -2.5 1.0 0.5 crimson_nylium
+2.5 -2.5 1.0 0.5 crimson_nylium
+3.0 -2.5 1.0 0.5 crimson_nylium
+3.5 -2.5 1.0 0.5 crimson_nylium
+
+0.0 -2.5 1.5 0.5 crimson_nylium
+0.5 -2.5 1.5 0.5 crimson_nylium
+1.0 -2.5 1.5 0.5 crimson_nylium
+1.5 -2.5 1.5 0.5 crimson_nylium
+2.0 -2.5 1.5 0.5 crimson_nylium
+2.5 -2.5 1.5 0.5 crimson_nylium
+3.0 -2.5 1.5 0.5 crimson_nylium
+3.5 -2.5 1.5 0.5 crimson_nylium
+
+0.0 -2.5 2.0 0.5 crimson_nylium
+0.5 -2.5 2.0 0.5 crimson_nylium
+1.0 -2.5 2.0 0.5 crimson_nylium
+1.5 -2.5 2.0 0.5 crimson_nylium
+2.0 -2.5 2.0 0.5 crimson_nylium
+2.5 -2.5 2.0 0.5 crimson_nylium
+3.0 -2.5 2.0 0.5 crimson_nylium
+3.5 -2.5 2.0 0.5 crimson_nylium
+
+# Portal base
+0.0 -1.5 -1.5 0.5 obsidian
+0.5 -1.5 -1.5 0.5 obsidian
+1.0 -1.5 -1.5 0.5 obsidian
+1.5 -1.5 -1.5 0.5 obsidian
+
+# Portal lados
+0.0 -1.0 -1.5 0.5 obsidian
+0.0 -0.5 -1.5 0.5 obsidian
+0.0 0.0 -1.5 0.5 obsidian
+0.0 0.5 -1.5 0.5 obsidian
+
+1.5 -1.0 -1.5 0.5 obsidian
+1.5 -0.5 -1.5 0.5 obsidian
+1.5 0.0 -1.5 0.5 obsidian
+1.5 0.5 -1.5 0.5 obsidian
+
+# Portal superior
+0.5 0.5 -1.5 0.5 obsidian
+1.0 0.5 -1.5 0.5 obsidian
+
+# Tronco
+3.0 -2.0 1.5 0.5 crimson_stem
+3.0 -1.5 1.5 0.5 crimson_stem
+3.0 -1.0 1.5 0.5 crimson_stem
+3.0 -0.5 1.5 0.5 crimson_stem
+3.0 0.0 1.5 0.5 crimson_stem
+
+# Base hojas
+2.0 0.5 0.5 0.5 nether_wart_block
+2.5 0.0 0.5 0.5 nether_wart_block
+2.5 -0.5 0.5 0.5 nether_wart_block
+2.5 0.5 0.5 0.5 nether_wart_block
+3.0 0.5 0.5 0.5 nether_wart_block
+3.5 0.5 0.5 0.5 nether_wart_block
+
+2.0 0.5 1.0 0.5 nether_wart_block
+2.5 0.5 1.0 0.5 nether_wart_block
+3.0 0.5 1.0 0.5 nether_wart_block
+3.5 0.5 1.0 0.5 nether_wart_block
+4.0 0.5 1.0 0.5 nether_wart_block
+
+2.0 0.5 1.5 0.5 nether_wart_block
+2.5 0.5 1.5 0.5 nether_wart_block
+3.0 0.5 1.5 0.5 nether_wart_block
+3.5 0.5 1.5 0.5 nether_wart_block
+4.0 0.5 1.5 0.5 nether_wart_block
+2.0 0.0 1.5 0.5 shroomlight
+
+2.0 0.5 2.0 0.5 nether_wart_block
+2.5 0.5 2.0 0.5 nether_wart_block
+3.0 0.0 2.0 0.5 nether_wart_block
+3.5 0.0 2.0 0.5 nether_wart_block
+4.0 0.5 2.0 0.5 nether_wart_block
+
+3.0 0.5 2.5 0.5 nether_wart_block
+3.5 0.5 2.5 0.5 nether_wart_block
+3.5 1.0 2.5 0.5 nether_wart_block
+
+# Hojas superior
+2.5 1.0 1.0 0.5 nether_wart_block
+3.0 1.0 1.0 0.5 nether_wart_block
+3.5 1.0 1.0 0.5 nether_wart_block
+
+2.5 1.0 1.5 0.5 nether_wart_block
+3.5 1.0 1.5 0.5 nether_wart_block
+
+2.5 1.0 2.0 0.5 nether_wart_block
+3.0 1.0 2.0 0.5 nether_wart_block
+3.5 1.0 2.0 0.5 nether_wart_block
+
+3.0 1.5 1.0 0.5 nether_wart_block
+3.5 1.5 1.0 0.5 nether_wart_block
+
+2.5 1.5 1.5 0.5 nether_wart_block
+3.0 1.5 1.5 0.5 nether_wart_block
+3.5 1.5 1.5 0.5 nether_wart_block
+
+2.5 1.5 2.0 0.5 nether_wart_block
+3.0 1.5 2.0 0.5 nether_wart_block
+3.5 1.5 2.0 0.5 nether_wart_block
+

@@ -441,7 +441,7 @@ fn main() {
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/shroomlight.png");
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_nylium.png");
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_stem.png");
-    texture_manager.load_texture(&mut window, &raylib_thread, "assets/blackstone.png");
+    texture_manager.load_texture(&mut window, &raylib_thread, "assets/nether_wart_block.png");
 
     let skybox_texture = if std::path::Path::new("assets/nether_skybox.png").exists() {
         texture_manager.load_texture(&mut window, &raylib_thread, "assets/nether_skybox.png");
@@ -456,10 +456,10 @@ fn main() {
     framebuffer.set_background_color(Color::new(51, 13, 13, 255));
 
     let obsidian = Material {
-        diffuse: Vector3::new(0.1, 0.05, 0.15),
-        albedo: [0.8, 0.3],
+        diffuse: Vector3::new(0.15, 0.1, 0.2),
+        albedo: [0.9, 0.1],
         specular: 90.0,
-        reflectivity: 0.2,
+        reflectivity: 0.1,
         transparency: 0.0,
         refractive_index: 0.0,
         texture: Some("assets/obsidian.png".to_string()),
@@ -507,14 +507,14 @@ fn main() {
         emission_strength: 0.0,
     };
 
-    let blackstone = Material {
-        diffuse: Vector3::new(0.15, 0.15, 0.18),
-        albedo: [0.9, 0.1],
-        specular: 20.0,
-        reflectivity: 0.05,
+    let nether_wart_block = Material {
+        diffuse: Vector3::new(0.5, 0.05, 0.08),
+        albedo: [0.95, 0.05],
+        specular: 8.0,
+        reflectivity: 0.0,
         transparency: 0.0,
         refractive_index: 0.0,
-        texture: Some("assets/blackstone.png".to_string()),
+        texture: Some("assets/nether_wart_block.png".to_string()),
         normal_map_id: None,
         emission: Vector3::zero(),
         emission_strength: 0.0,
@@ -525,7 +525,7 @@ fn main() {
     materials.insert("shroomlight".to_string(), shroomlight.clone());
     materials.insert("crimson_nylium".to_string(), crimson_nylium.clone());
     materials.insert("crimson_stem".to_string(), crimson_stem.clone());
-    materials.insert("blackstone".to_string(), blackstone.clone());
+    materials.insert("nether_wart_block".to_string(), nether_wart_block.clone());
 
     let objects = if std::path::Path::new("scene.txt").exists() {
         match load_scene_from_file("scene.txt", &materials) {
@@ -538,7 +538,7 @@ fn main() {
                     Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
                     Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
                     Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
-                    Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, blackstone),
+                    Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, nether_wart_block),
                 ]
             }
         }
@@ -550,7 +550,7 @@ fn main() {
             Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
             Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
             Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
-            Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, blackstone),
+            Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, nether_wart_block),
         ]
     };
 
