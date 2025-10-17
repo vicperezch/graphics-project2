@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 
 use raylib::prelude::*;
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::thread;
 
@@ -24,6 +25,66 @@ use material::{Material, vector3_to_color};
 use ray_intersect::{Intersect, RayIntersect};
 use snell::{reflect, refract};
 use textures::TextureManager;
+
+fn load_scene_from_file(
+    filepath: &str,
+    materials: &std::collections::HashMap<String, Material>,
+) -> Result<Vec<Cube>, String> {
+    let contents = std::fs::read_to_string(filepath)
+        .map_err(|e| format!("Failed to read scene file '{}': {}", filepath, e))?;
+
+    let mut cubes = Vec::new();
+
+    for (line_num, line) in contents.lines().enumerate() {
+        let trimmed = line.trim();
+
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        let parts: Vec<&str> = trimmed.split_whitespace().collect();
+
+        if parts.len() != 5 {
+            return Err(format!(
+                "Line {}: Expected 5 parameters (x y z size material), got {}",
+                line_num + 1,
+                parts.len()
+            ));
+        }
+
+        let x = parts[0]
+            .parse::<f32>()
+            .map_err(|_| format!("Line {}: Invalid x coordinate '{}'", line_num + 1, parts[0]))?;
+        let y = parts[1]
+            .parse::<f32>()
+            .map_err(|_| format!("Line {}: Invalid y coordinate '{}'", line_num + 1, parts[1]))?;
+        let z = parts[2]
+            .parse::<f32>()
+            .map_err(|_| format!("Line {}: Invalid z coordinate '{}'", line_num + 1, parts[2]))?;
+        let size = parts[3]
+            .parse::<f32>()
+            .map_err(|_| format!("Line {}: Invalid size '{}'", line_num + 1, parts[3]))?;
+        let material_name = parts[4];
+
+        let material = materials.get(material_name).ok_or_else(|| {
+            format!(
+                "Line {}: Unknown material '{}'. Available: {}",
+                line_num + 1,
+                material_name,
+                materials
+                    .keys()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        })?;
+
+        cubes.push(Cube::new(Vector3::new(x, y, z), size, material.clone()));
+    }
+
+    println!("✓ Loaded {} blocks from '{}'", cubes.len(), filepath);
+    Ok(cubes)
+}
 
 fn procedural_sky(
     dir: Vector3,
@@ -459,13 +520,39 @@ fn main() {
         emission_strength: 0.0,
     };
 
-    let objects = vec![
-        Cube::new(Vector3::new(-2.5, 0.0, 0.0), 1.5, obsidian),
-        Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
-        Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
-        Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
-        Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, blackstone),
-    ];
+    let mut materials = std::collections::HashMap::new();
+    materials.insert("obsidian".to_string(), obsidian.clone());
+    materials.insert("shroomlight".to_string(), shroomlight.clone());
+    materials.insert("crimson_nylium".to_string(), crimson_nylium.clone());
+    materials.insert("crimson_stem".to_string(), crimson_stem.clone());
+    materials.insert("blackstone".to_string(), blackstone.clone());
+
+    let objects = if std::path::Path::new("scene.txt").exists() {
+        match load_scene_from_file("scene.txt", &materials) {
+            Ok(cubes) => cubes,
+            Err(e) => {
+                eprintln!("Error loading scene: {}", e);
+                eprintln!("Using default scene instead.");
+                vec![
+                    Cube::new(Vector3::new(-2.5, 0.0, 0.0), 1.5, obsidian),
+                    Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
+                    Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
+                    Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
+                    Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, blackstone),
+                ]
+            }
+        }
+    } else {
+        println!("✗ scene.txt not found, using default scene");
+        println!("  Create scene.txt to load custom scenes!");
+        vec![
+            Cube::new(Vector3::new(-2.5, 0.0, 0.0), 1.5, obsidian),
+            Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
+            Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
+            Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
+            Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, blackstone),
+        ]
+    };
 
     let mut indices: Vec<usize> = (0..objects.len()).collect();
     let bvh = BVHNode::build(&objects, &mut indices);
