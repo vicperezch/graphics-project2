@@ -26,6 +26,18 @@ use ray_intersect::{Intersect, RayIntersect};
 use snell::{reflect, refract};
 use textures::TextureManager;
 
+pub enum SceneObject {
+    Cube(Cube),
+}
+
+impl RayIntersect for SceneObject {
+    fn ray_intersect(&self, ray_origin: &Vector3, ray_direction: &Vector3) -> Intersect {
+        match self {
+            SceneObject::Cube(cube) => cube.ray_intersect(ray_origin, ray_direction),
+        }
+    }
+}
+
 fn load_scene_from_file(
     filepath: &str,
     materials: &std::collections::HashMap<String, Material>,
@@ -82,7 +94,6 @@ fn load_scene_from_file(
         cubes.push(Cube::new(Vector3::new(x, y, z), size, material.clone()));
     }
 
-    println!("✓ Loaded {} blocks from '{}'", cubes.len(), filepath);
     Ok(cubes)
 }
 
@@ -168,7 +179,7 @@ pub fn cast_ray(
     texture_manager: &TextureManager,
     skybox_texture: Option<&str>,
 ) -> Vector3 {
-    if depth > 3 {
+    if depth > 2 {
         return procedural_sky(*ray_direction, texture_manager, skybox_texture);
     }
 
@@ -192,20 +203,20 @@ pub fn cast_ray(
 
     for light in lights {
         let light_direction = (light.position - intersect.point).normalized();
-        let reflection_direction = reflect(&-light_direction, &normal).normalized();
 
         let diffuse_intensity = normal.dot(light_direction).max(0.0);
-        let shadow_intensity = if diffuse_intensity > 0.01 {
-            cast_shadow(&intersect, light, bvh, objects)
-        } else {
-            0.0
-        };
 
+        if diffuse_intensity < 0.01 {
+            continue;
+        }
+
+        let shadow_intensity = cast_shadow(&intersect, light, bvh, objects);
         let light_intensity = light.intensity * (1.0 - shadow_intensity);
         let final_diffuse_intensity = diffuse_intensity * light_intensity;
 
         total_diffuse = total_diffuse + light.color * final_diffuse_intensity;
 
+        let reflection_direction = reflect(&-light_direction, &normal).normalized();
         let specular_intensity = view_direction
             .dot(reflection_direction)
             .max(0.0)
@@ -234,7 +245,7 @@ pub fn cast_ray(
     let mut reflection_color = Vector3::zero();
     let reflectivity = intersect.material.reflectivity;
 
-    if reflectivity > 0.0 {
+    if reflectivity > 0.05 {
         let reflect_direction = reflect(ray_direction, &normal);
         let reflect_origin = intersect.point + normal * ORIGIN_BIAS;
         reflection_color = cast_ray(
@@ -252,7 +263,7 @@ pub fn cast_ray(
     let transparency = intersect.material.transparency;
     let mut refraction_color = Vector3::zero();
 
-    if transparency > 0.0 {
+    if transparency > 0.05 {
         let refract_direction =
             refract(ray_direction, &normal, intersect.material.refractive_index);
         let refract_origin = offset_origin(&intersect, &refract_direction);
@@ -268,7 +279,7 @@ pub fn cast_ray(
         );
     }
 
-    let emissive = if intersect.material.emission_strength > 0.0 {
+    let emissive = if intersect.material.emission_strength > 0.01 {
         diffuse_color * intersect.material.emission * intersect.material.emission_strength
     } else {
         Vector3::zero()
@@ -442,13 +453,12 @@ fn main() {
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_nylium.png");
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/crimson_stem.png");
     texture_manager.load_texture(&mut window, &raylib_thread, "assets/nether_wart_block.png");
+    texture_manager.load_texture(&mut window, &raylib_thread, "assets/portal.png");
 
     let skybox_texture = if std::path::Path::new("assets/nether_skybox.png").exists() {
         texture_manager.load_texture(&mut window, &raylib_thread, "assets/nether_skybox.png");
-        println!("✓ Skybox texture loaded: assets/nether_skybox.png");
         Some("assets/nether_skybox.png".to_string())
     } else {
-        println!("✗ Skybox texture not found, using procedural sky");
         None
     };
 
@@ -520,12 +530,26 @@ fn main() {
         emission_strength: 0.0,
     };
 
+    let portal = Material {
+        diffuse: Vector3::new(0.8, 0.8, 0.8),
+        albedo: [0.9, 0.1],
+        specular: 10.0,
+        reflectivity: 0.0,
+        transparency: 0.5,
+        refractive_index: 1.3,
+        texture: Some("assets/portal.png".to_string()),
+        normal_map_id: None,
+        emission: Vector3::zero(),
+        emission_strength: 0.0,
+    };
+
     let mut materials = std::collections::HashMap::new();
     materials.insert("obsidian".to_string(), obsidian.clone());
     materials.insert("shroomlight".to_string(), shroomlight.clone());
     materials.insert("crimson_nylium".to_string(), crimson_nylium.clone());
     materials.insert("crimson_stem".to_string(), crimson_stem.clone());
     materials.insert("nether_wart_block".to_string(), nether_wart_block.clone());
+    materials.insert("portal".to_string(), portal.clone());
 
     let objects = if std::path::Path::new("scene.txt").exists() {
         match load_scene_from_file("scene.txt", &materials) {
@@ -539,18 +563,18 @@ fn main() {
                     Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
                     Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
                     Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, nether_wart_block),
+                    Cube::new(Vector3::new(0.0, 0.0, 3.0), 1.5, portal),
                 ]
             }
         }
     } else {
-        println!("✗ scene.txt not found, using default scene");
-        println!("  Create scene.txt to load custom scenes!");
         vec![
             Cube::new(Vector3::new(-2.5, 0.0, 0.0), 1.5, obsidian),
             Cube::new(Vector3::new(0.0, 0.0, -1.0), 1.5, shroomlight),
             Cube::new(Vector3::new(2.5, 0.0, 0.0), 1.5, crimson_nylium),
             Cube::new(Vector3::new(-1.5, 0.0, 2.0), 1.5, crimson_stem),
             Cube::new(Vector3::new(1.5, 0.0, 2.0), 1.5, nether_wart_block),
+            Cube::new(Vector3::new(0.0, 0.0, 3.0), 1.5, portal),
         ]
     };
 
@@ -588,6 +612,9 @@ fn main() {
 
     let render_config = RenderConfig::new(window_width as i32, window_height as i32, PI / 3.0);
 
+    let mut frame_count = 0;
+    let mut fps_timer = std::time::Instant::now();
+
     while !window.window_should_close() {
         framebuffer.clear();
 
@@ -622,5 +649,15 @@ fn main() {
         );
 
         framebuffer.swap_buffers(&mut window, &raylib_thread);
+
+        frame_count += 1;
+        let elapsed = fps_timer.elapsed().as_secs_f32();
+        if elapsed >= 2.0 {
+            let fps = frame_count as f32 / elapsed;
+            println!("FPS: {:.1}", fps);
+            frame_count = 0;
+            fps_timer = std::time::Instant::now();
+        }
     }
 }
+

@@ -1,4 +1,3 @@
-// src/cube.rs
 use crate::material::Material;
 use crate::ray_intersect::{Intersect, RayIntersect};
 use raylib::prelude::Vector3;
@@ -15,6 +14,21 @@ impl Cube {
         Self {
             min_bounds: center - half_size,
             max_bounds: center + half_size,
+            material,
+        }
+    }
+
+    pub fn new_rect(
+        center: Vector3,
+        width: f32,
+        height: f32,
+        depth: f32,
+        material: Material,
+    ) -> Self {
+        let half = Vector3::new(width / 2.0, height / 2.0, depth / 2.0);
+        Self {
+            min_bounds: center - half,
+            max_bounds: center + half,
             material,
         }
     }
@@ -119,4 +133,3 @@ impl RayIntersect for Cube {
         Intersect::new(self.material.clone(), distance, normal, point, u, v)
     }
 }
-
